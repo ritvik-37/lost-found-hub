@@ -1,4 +1,6 @@
+import { env } from '../config/env.js';
 import { CATEGORIES, CLAIM_STATUSES, ITEM_STATUSES, STATUS_FLOW, canTransition } from '../constants.js';
+import { describeLogins, seedDatabase } from '../seed/seed.js';
 import { Claim } from '../models/Claim.js';
 import { Item } from '../models/Item.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -157,6 +159,15 @@ export async function reviewClaim(req, res) {
         : 'Claim rejected.',
     data: { claim: serializeClaim(full, { admin: true }), autoRejectedClaims: autoRejected },
   });
+}
+
+// POST /api/admin/demo/reset  (only while DEMO_LOGINS is on)
+export async function resetDemoData(_req, res) {
+  if (!env.DEMO_LOGINS) throw ApiError.notFound('Demo reset is turned off.');
+  const { passwords } = await seedDatabase({ log: () => {} });
+  console.log('[seed] demo data reset by an admin. Logins (or use the demo buttons):');
+  for (const line of describeLogins(passwords)) console.log(line);
+  res.json({ success: true, message: 'Demo data restored. Everyone was signed out.' });
 }
 
 // GET /api/admin/stats

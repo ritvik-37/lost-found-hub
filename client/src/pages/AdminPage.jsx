@@ -1,4 +1,5 @@
-import { Check, CircleAlert, Lock, Package, ShieldCheck, User } from 'lucide-react';
+import { Check, CircleAlert, Lock, Package, RotateCcw, ShieldCheck, User } from 'lucide-react';
+import { useState } from 'react';
 import { Link, useLocation } from 'react-router';
 import { AllItemsTable } from '../components/admin/AllItemsTable.jsx';
 import { CategoryChart, LostFoundDonut, WeekChart } from '../components/admin/Charts.jsx';
@@ -7,7 +8,10 @@ import { ReviewQueue } from '../components/admin/ReviewQueue.jsx';
 import { EmptyState } from '../components/ui/EmptyState.jsx';
 import { Loading, Skeleton } from '../components/ui/Skeleton.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
+import { useConfirm } from '../context/ConfirmContext.jsx';
+import { useToast } from '../context/ToastContext.jsx';
 import { useApi } from '../hooks/useApi.js';
+import { api } from '../lib/api.js';
 import { useDocumentTitle } from '../hooks/useDocumentTitle.js';
 
 const PENDING_ITEMS = { status: 'PENDING', limit: 100, sort: 'oldest' };
@@ -25,12 +29,54 @@ export default function AdminPage() {
             <h2>Admin dashboard</h2>
             <p className="muted m-0">Review reports, verify claims, and track activity</p>
           </div>
+          {ready && isAdmin && <ResetDemoButton />}
         </div>
         {!ready && <Loading />}
         {ready && !isAdmin && <AdminsOnly signedIn={Boolean(user)} />}
         {ready && isAdmin && <Dashboard />}
       </div>
     </div>
+  );
+}
+
+/**
+ * Restores the original demo data (shown only when the server has demo sign-in on).
+ * Handy right before judging, or after visitors have changed things on the public demo.
+ */
+function ResetDemoButton() {
+  const demo = useApi('/api/auth/demo');
+  const { demoLogin } = useAuth();
+  const confirm = useConfirm();
+  const toast = useToast();
+  const [busy, setBusy] = useState(false);
+  if (!demo.data?.accounts?.length) return null;
+
+  async function reset() {
+    const ok = await confirm({
+      title: 'Reset all demo data?',
+      message:
+        'Every report, claim, photo and account created since the last reset is deleted, and the original demo data comes back. Everyone is signed out.',
+      confirmLabel: 'Reset demo data',
+      tone: 'danger',
+    });
+    if (!ok) return;
+    setBusy(true);
+    try {
+      const json = await api('/api/admin/demo/reset', { method: 'POST' });
+      await demoLogin('admin'); // the admin account was recreated, so sign back in
+      toast(json.message.replace('Everyone was signed out.', 'You are signed in as the demo admin.'));
+    } catch (err) {
+      toast(err.message, 'err');
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  return (
+    <button type="button" className="btn btn-ghost btn-sm" onClick={reset} disabled={busy}>
+      <RotateCcw className={busy ? 'icon-sm spin' : 'icon-sm'} aria-hidden="true" />
+      {busy ? 'Resetting…' : 'Reset demo data'}
+    </button>
   );
 }
 

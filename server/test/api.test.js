@@ -535,4 +535,15 @@ describe('admin', () => {
     assert.equal(res.status, 200);
     await agents.anon.get(`/api/items/${ids.itemIds.notebook}`).expect(404);
   });
+
+  // Keep last: it recreates every account, which signs all test agents out.
+  test('reset demo data: students get 403, admin restores the seed', async () => {
+    await agents.rahul.post('/api/admin/demo/reset').expect(403);
+    const res = await agents.admin.post('/api/admin/demo/reset');
+    assert.equal(res.status, 200, res.body.message);
+    assert.equal(await Item.countDocuments(), 22);
+    assert.equal(await Claim.countDocuments({ status: 'PENDING' }), 3);
+    const me = await agents.admin.get('/api/auth/me');
+    assert.equal(me.body.data.user, null, 'old sessions end after a reset');
+  });
 });

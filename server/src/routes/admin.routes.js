@@ -3,6 +3,7 @@ import {
   getStats,
   listAllItems,
   listClaims,
+  resetDemoData,
   reviewClaim,
   updateItemStatus,
 } from '../controllers/admin.controller.js';
@@ -20,5 +21,6 @@ router.get('/items', validate({ query: adminListQuery }), listAllItems);
 router.patch('/items/:id/status', validId('Item'), validate({ body: itemStatusSchema }), updateItemStatus);
 router.get('/claims', validate({ query: adminClaimsQuery }), listClaims);
 router.patch('/claims/:id', validId('Claim'), validate({ body: reviewClaimSchema }), reviewClaim);
+router.post('/demo/reset', resetDemoData);
 
 export default router;

@@ -177,7 +177,7 @@ maps field → message. Auth is a JWT in an httpOnly `lfh_token` cookie.
 ├── server/
 │   ├── scripts/local-db.js embedded MongoDB for dev
 │   ├── src/  config/ constants.js models/ middleware/ validators/ controllers/ routes/ services/ seed/ utils/
-│   └── test/api.test.js    57 API tests (node:test + supertest + in-memory MongoDB)
+│   └── test/api.test.js    58 API tests (node:test + supertest + in-memory MongoDB)
 ├── render.yaml             one-click Render deployment (Blueprint)
 └── package.json            workspaces + dev/seed/test/build/start scripts
 ```
@@ -240,7 +240,7 @@ Deliberate changes from the prototype, each for accessibility or the brief:
 | `npm run dev` | embedded DB + API + web app |
 | `npm run dev:no-db` | API + web app (when `DB_URL` points to your own MongoDB) |
 | `npm run seed` | reset to demo data |
-| `npm test` | 57 API tests against a throwaway in-memory MongoDB |
+| `npm test` | 58 API tests against a throwaway in-memory MongoDB |
 | `npm run build` | production build of the client (`client/dist`) |
 | `npm start` | API; also serves `client/dist` if built, so the whole app runs from one port |
 
@@ -265,9 +265,13 @@ same-origin). `render.yaml` describes it.
    accounts in the Render log. Judges use the one-click demo buttons (`DEMO_LOGINS=true`), so anyone with the
    link can act as the demo admin; that is intended for judging. Your site is at `https://lost-found-hub-xxxx.onrender.com`.
 
-Free-tier notes: the service sleeps after 15 idle minutes and the next visit takes ~50 s to wake (open it once
-before judging). Photos are stored in MongoDB, so restarts don't lose them.
-To reset the live demo data, put the Atlas string in `server/.env` as `DB_URL` and run `npm run seed`.
+4. **Keep it awake:** Render's free plan sleeps after 15 idle minutes (the next visit then takes ~50 s). The
+   `Keep demo awake` GitHub Action pings the site every 10 minutes once you add a repository variable
+   `SITE_URL` (Settings → Secrets and variables → Actions → Variables) with your Render URL.
+
+**Reset before judging:** sign in as the demo admin → *Admin* → **Reset demo data**. It restores the original
+reports, claims and accounts (anything judges changed is undone). Photos are stored in MongoDB, so restarts
+don't lose them.
 
 ## Troubleshooting
 
@@ -276,5 +280,3 @@ To reset the live demo data, put the Atlas string in `server/.env` as `DB_URL` a
 - **Project inside OneDrive/Dropbox:** works, but syncing `node_modules` is slow. The DB data folder is
   deliberately kept outside the project (`~/.lost-found-hub`).
 - **Want a fresh start:** stop `npm run dev`, delete `~/.lost-found-hub/mongo-data`, run `npm run dev` again.
-#   l o s t - f o u n d - h u b  
- 
