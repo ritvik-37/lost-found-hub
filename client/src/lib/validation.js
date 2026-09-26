@@ -24,7 +24,7 @@ export const itemRules = {
 export function imageError(file) {
   if (!file) return '';
   if (!IMAGE_TYPES.includes(file.type)) return 'Use a JPG, PNG or WebP image under 5 MB.';
-  if (file.size > MAX_IMAGE_BYTES) return 'Image must be 5 MB or smaller. Try a smaller photo or a screenshot.';
+  if (file.size > MAX_IMAGE_BYTES) return "This photo is still over 5 MB after resizing. Try a screenshot of it instead.";
   return '';
 }
 

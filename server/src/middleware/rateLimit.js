@@ -21,6 +21,12 @@ export const registerLimiter = limiter(
   'Too many accounts created from this network. Please try again in an hour.',
 );
 
+/** Caps new reports and claims per network, so a public demo can't be flooded (photos live in the DB). */
+export const submitLimiter = limiter(
+  { windowMs: 60 * 60 * 1000, limit: 30 },
+  'Too many reports or claims from this network in the last hour. Please try again later.',
+);
+
 export const apiLimiter = limiter(
   { windowMs: 60 * 1000, limit: 300 },
   'Too many requests. Please slow down and try again in a minute.',

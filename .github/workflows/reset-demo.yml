@@ -1,0 +1,30 @@
+# Restores the original demo data every night (02:00 India time), so each judge starts from a clean demo
+# no matter what earlier visitors changed. Run it any time from the Actions tab ("Run workflow").
+# Uses the one-click demo admin sign-in, so it needs no password. Needs the SITE_URL repository variable.
+# To stop the nightly reset, delete the "schedule" lines below.
+name: Reset demo data
+
+on:
+  schedule:
+    - cron: '30 20 * * *' # 20:30 UTC = 02:00 IST
+  workflow_dispatch:
+
+jobs:
+  reset:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Reset the live demo
+        env:
+          SITE_URL: ${{ vars.SITE_URL }}
+        run: |
+          if [ -z "$SITE_URL" ]; then
+            echo "SITE_URL is not set; skipping."
+            exit 0
+          fi
+          # Wake the site first (free plan may be asleep).
+          curl --fail --silent --show-error --max-time 120 --retry 3 "$SITE_URL/api/health" > /dev/null
+          curl --fail --silent --show-error -c jar -X POST -H 'Content-Type: application/json' \
+            -d '{"account":"admin"}' "$SITE_URL/api/auth/demo" > /dev/null
+          curl --fail --silent --show-error -b jar -X POST "$SITE_URL/api/admin/demo/reset"
+          echo

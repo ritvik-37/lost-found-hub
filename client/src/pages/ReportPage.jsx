@@ -12,7 +12,8 @@ import { focusFirstError, useForm } from '../hooks/useForm.js';
 import { api, assetUrl } from '../lib/api.js';
 import { CATEGORIES, LOCATIONS } from '../lib/constants.js';
 import { cx, plural, todayISO } from '../lib/format.js';
-import { imageError, itemRules } from '../lib/validation.js';
+import { shrinkImage } from '../lib/image.js';
+import { IMAGE_TYPES, imageError, itemRules } from '../lib/validation.js';
 
 const FIELD_ORDER = ['title', 'category', 'location', 'date', 'exactSpot', 'description', 'image', 'hiddenDetails'];
 
@@ -100,19 +101,26 @@ function ReportForm({ existingItem }) {
   const [imageErr, setImageErr] = useState('');
   const [dragging, setDragging] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [preparing, setPreparing] = useState(false); // shrinking a photo before upload
   const fileInput = useRef(null);
 
   // Free the preview object URL when it changes or the page unmounts.
   useEffect(() => () => image && URL.revokeObjectURL(image.url), [image]);
 
-  function pickFile(file) {
-    if (!file) return;
-    const err = imageError(file);
-    setImageErr(err);
-    if (err) {
+  async function pickFile(picked) {
+    if (!picked) return;
+    const reject = (message) => {
+      setImageErr(message);
       if (fileInput.current) fileInput.current.value = '';
-      return;
-    }
+    };
+    // Check the type first, then shrink big photos, then enforce the 5 MB limit on the result.
+    if (!IMAGE_TYPES.includes(picked.type)) return reject(imageError(picked));
+    setPreparing(true);
+    const file = await shrinkImage(picked);
+    setPreparing(false);
+    const err = imageError(file);
+    if (err) return reject(err);
+    setImageErr('');
     setImage({ file, url: URL.createObjectURL(file) });
   }
 
@@ -240,7 +248,7 @@ function ReportForm({ existingItem }) {
 
             <div className="field">
               <span className="legend" id="photo-label">
-                Photo <span className="optional">(optional, JPG/PNG/WebP, max 5 MB)</span>
+                Photo <span className="optional">(optional, JPG/PNG/WebP; large photos are resized automatically)</span>
               </span>
               <label
                 className={cx('dropzone', dragging && 'drag')}
@@ -266,7 +274,9 @@ function ReportForm({ existingItem }) {
                   onChange={(e) => pickFile(e.target.files?.[0])}
                 />
                 <Upload className="mx-auto h-7 w-7 text-primary-ink" aria-hidden="true" />
-                <div className="mt-1.5 font-semibold">{previewUrl ? 'Choose a different photo' : 'Tap to upload a photo'}</div>
+                <div className="mt-1.5 font-semibold" aria-live="polite">
+                  {preparing ? 'Preparing photo…' : previewUrl ? 'Choose a different photo' : 'Tap to upload a photo'}
+                </div>
                 <div className="hint text-[.82rem] text-muted-fg">A clear photo helps owners recognise their item</div>
               </label>
               {previewUrl && (
@@ -309,7 +319,7 @@ function ReportForm({ existingItem }) {
                 Clear
               </button>
             )}
-            <button type="submit" className="btn btn-primary" disabled={submitting}>
+            <button type="submit" className="btn btn-primary" disabled={submitting || preparing}>
               {submitting ? (
                 <>
                   <LoaderCircle className="icon spin" aria-hidden="true" />
