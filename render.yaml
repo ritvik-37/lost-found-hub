@@ -1,0 +1,34 @@
+# Render Blueprint: one free web service runs the API and serves the built React app (same origin).
+# Deploy: Render dashboard -> New -> Blueprint -> pick this repo, then paste your MongoDB Atlas URL into DB_URL.
+services:
+  - type: web
+    name: lost-found-hub
+    runtime: node
+    plan: free
+    region: singapore
+    # --include=dev: the client build needs Vite/Tailwind even though NODE_ENV=production.
+    buildCommand: npm ci --include=dev && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      - key: NODE_ENV
+        value: production
+      # Skip downloading the dev-only embedded MongoDB binary during the build.
+      - key: MONGOMS_DISABLE_POSTINSTALL
+        value: "1"
+      # MongoDB Atlas connection string; you enter it in the Render dashboard (never commit it).
+      - key: DB_URL
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: TRUST_PROXY
+        value: "1"
+      # First boot on an empty database loads the demo accounts and items for the judges.
+      - key: SEED_ON_EMPTY
+        value: "true"
+      # One-click demo sign-in for judges. Seeded passwords are random (see the deploy log), never in the repo.
+      - key: DEMO_LOGINS
+        value: "true"
