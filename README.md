@@ -276,5 +276,4 @@ To reset the live demo data, put the Atlas string in `server/.env` as `DB_URL` a
 - **Project inside OneDrive/Dropbox:** works, but syncing `node_modules` is slow. The DB data folder is
   deliberately kept outside the project (`~/.lost-found-hub`).
 - **Want a fresh start:** stop `npm run dev`, delete `~/.lost-found-hub/mongo-data`, run `npm run dev` again.
-#   l o s t - f o u n d - h u b  
- 
+#
