@@ -1,0 +1,25 @@
+{
+  "name": "lost-found-hub",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Campus lost-and-found system (Vision2Web hackathon, Theme 1: Smart Campus & Student Life)",
+  "workspaces": [
+    "server",
+    "client"
+  ],
+  "scripts": {
+    "dev": "concurrently -n db,api,web -c gray,blue,green \"npm run db -w server\" \"npm run dev -w server\" \"npm run dev -w client\"",
+    "dev:no-db": "concurrently -n api,web -c blue,green \"npm run dev -w server\" \"npm run dev -w client\"",
+    "db": "npm run db -w server",
+    "seed": "npm run seed -w server",
+    "test": "npm test -w server",
+    "build": "npm run build -w client",
+    "start": "npm start -w server"
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.5"
+  },
+  "engines": {
+    "node": ">=20.19"
+  }
+}
